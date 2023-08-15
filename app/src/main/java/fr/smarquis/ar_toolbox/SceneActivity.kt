@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -52,6 +53,10 @@ import com.google.ar.sceneform.HitTestResult
 import com.google.ar.sceneform.rendering.PlaneRenderer
 import fr.smarquis.ar_toolbox.databinding.ActivitySceneBinding
 import fr.smarquis.ar_toolbox.databinding.DialogInputBinding
+import java.io.File
+import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.*
 
 class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inflate) {
 
@@ -59,6 +64,9 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
     private val model: SceneViewModel by viewModels()
     private val settings by lazy { Settings.instance(this) }
     private var drawing: Drawing? = null
+    fun filename(): String = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
+
+    fun recordingTraceFile(extension: String): File = File(filename() + extension)
 
     private val setOfMaterialViews by lazy {
         with(bottomSheetNode.body) {
@@ -499,6 +507,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
                     cloudAnchorStateValue.text = (node as? CloudAnchor)?.state()?.name
                     cloudAnchorIdValue.text = (node as? CloudAnchor)?.let { it.id() ?: "…" }
                     measureValue.text = (node as? Measure)?.formatMeasure()
+                    serializeNode(node)
                 }
             }
         }
@@ -547,6 +556,31 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
                 }
             }
             else -> Unit
+        }
+    }
+
+    private fun serializeNode(node: Nodes) {
+        try {
+            val outputCSVFile = FileWriter(File(filename() + ".csv"), true)
+
+            val nodeData = node.worldPosition.format(this@SceneActivity)
+                .plus(";")
+                .plus(node.worldRotation.format(this@SceneActivity))
+                .plus(";")
+                .plus(node.worldScale.format(this@SceneActivity))
+                .plus(";")
+                .plus((node as? CloudAnchor)?.state()?.name)
+                .plus(";")
+                .plus((node as? CloudAnchor)?.let { it.id() ?: "…" })
+                .plus(";")
+                .plus((node as? Measure)?.formatMeasure())
+            outputCSVFile.write(nodeData)
+            outputCSVFile.write("\r\n")
+            outputCSVFile.flush()
+            outputCSVFile.close()
+        } catch (e: Exception) {
+            Log.e("SceneActivity", "Exception writing to file", e)
+            return
         }
     }
 }
