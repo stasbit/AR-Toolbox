@@ -2,6 +2,7 @@ package fr.smarquis.ar_toolbox
 
 import android.content.DialogInterface
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.text.Editable
@@ -19,36 +20,21 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.net.toUri
-import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
-import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED
-import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HIDDEN
+import com.google.android.material.bottomsheet.BottomSheetBehavior.*
 import com.google.ar.core.Anchor
 import com.google.ar.core.AugmentedImage
 import com.google.ar.core.AugmentedImageDatabase
 import com.google.ar.core.Config
-import com.google.ar.core.Config.AugmentedFaceMode
-import com.google.ar.core.Config.CloudAnchorMode
-import com.google.ar.core.Config.DepthMode
-import com.google.ar.core.Config.FocusMode
-import com.google.ar.core.Config.LightEstimationMode
+import com.google.ar.core.Config.*
 import com.google.ar.core.Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-import com.google.ar.core.Config.UpdateMode
 import com.google.ar.core.DepthPoint
 import com.google.ar.core.Plane
 import com.google.ar.core.Point
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingFailureReason
-import com.google.ar.core.TrackingFailureReason.BAD_STATE
-import com.google.ar.core.TrackingFailureReason.CAMERA_UNAVAILABLE
-import com.google.ar.core.TrackingFailureReason.EXCESSIVE_MOTION
-import com.google.ar.core.TrackingFailureReason.INSUFFICIENT_FEATURES
-import com.google.ar.core.TrackingFailureReason.INSUFFICIENT_LIGHT
-import com.google.ar.core.TrackingFailureReason.NONE
+import com.google.ar.core.TrackingFailureReason.*
 import com.google.ar.core.TrackingState
-import com.google.ar.core.TrackingState.PAUSED
-import com.google.ar.core.TrackingState.STOPPED
-import com.google.ar.core.TrackingState.TRACKING
+import com.google.ar.core.TrackingState.*
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.HitTestResult
 import com.google.ar.sceneform.rendering.PlaneRenderer
@@ -65,7 +51,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
     private val model: SceneViewModel by viewModels()
     private val settings by lazy { Settings.instance(this) }
     private var drawing: Drawing? = null
-    fun filename(): String = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
+    fun filename(): String = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.US).format(Date())
 
     fun recordingTraceFile(extension: String): File = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename() + extension)
 
@@ -244,15 +230,17 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
     private fun initNodeBottomSheet() = with(bottomSheetNode) {
         behavior().apply {
             skipCollapsed = true
-            addBottomSheetCallback(object : BottomSheetCallback() {
-                override fun onSlide(bottomSheet: View, slideOffset: Float) {}
-                override fun onStateChanged(bottomSheet: View, newState: Int) {
-                    bottomSheet.requestLayout()
-                    if (newState == STATE_HIDDEN) {
-                        coordinator.selectNode(null)
+            addBottomSheetCallback(
+                object : BottomSheetCallback() {
+                    override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+                    override fun onStateChanged(bottomSheet: View, newState: Int) {
+                        bottomSheet.requestLayout()
+                        if (newState == STATE_HIDDEN) {
+                            coordinator.selectNode(null)
+                        }
                     }
-                }
-            })
+                },
+            )
             state = STATE_HIDDEN
         }
         header.apply {
@@ -363,14 +351,16 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
             .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .setCancelable(false)
             .show()
-        value.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = !s.isNullOrBlank()
-            }
+        value.addTextChangedListener(
+            object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) {
+                    dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = !s.isNullOrBlank()
+                }
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        })
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            },
+        )
         value.text = value.text
         value.requestFocus()
     }
@@ -434,6 +424,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
                     CAMERA_UNAVAILABLE -> R.string.tracking_failure_camera_unavailable
                     null -> 0
                 }
+
                 STOPPED -> R.string.tracking_stopped
                 null -> 0
             },
@@ -449,6 +440,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
                     INSUFFICIENT_LIGHT, EXCESSIVE_MOTION, INSUFFICIENT_FEATURES -> android.R.drawable.presence_away
                     null -> 0
                 }
+
                 STOPPED -> android.R.drawable.presence_offline
                 null -> 0
             },
@@ -530,6 +522,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
                     sceneBehavior.state = STATE_EXPANDED
                 }
             }
+
             coordinator.selectedNode -> {
                 with(bottomSheetNode.header) {
                     name.text = node.name
@@ -556,11 +549,13 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
                     bottomSheetScene.root.tag = true
                 }
             }
+
             else -> Unit
         }
     }
 
     private fun serializeNode(node: Nodes) {
+        askForPermissions()
         try {
             val outputFile = recordingTraceFile(".csv");
             if (!outputFile.exists()) {
@@ -593,6 +588,16 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
         } catch (e: Exception) {
             Log.e("SceneActivity", "Exception writing to file", e)
             return
+        }
+    }
+
+    public fun askForPermissions() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            if (!Environment.isExternalStorageManager()) {
+                val getpermission = Intent()
+                getpermission.setAction(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                startActivity(getpermission)
+            }
         }
     }
 }
