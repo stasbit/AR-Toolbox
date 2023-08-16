@@ -563,8 +563,13 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
     private fun serializeNode(node: Nodes) {
         try {
             val outputFile = recordingTraceFile(".csv");
+            if (!outputFile.exists()) {
+                if (outputFile.createNewFile()) {
+                    Log.i("SceneActivity", "Output file created at " + outputFile.absolutePath)
+                }
+            }
             if (outputFile.exists()) {
-                Log.e("SceneActivity", "Output file created at " + outputFile.absolutePath)
+                Log.e("SceneActivity", "Add data to output file " + outputFile.absolutePath)
                 val outputCSVFile = FileWriter(outputFile, true)
 
                 val nodeData = node.worldPosition.format(this@SceneActivity)
@@ -583,7 +588,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
                 outputCSVFile.flush()
                 outputCSVFile.close()
             } else {
-                Log.e("SceneActivity", "Output file not created")
+                Log.e("SceneActivity", "Output file not exists")
             }
         } catch (e: Exception) {
             Log.e("SceneActivity", "Exception writing to file", e)
