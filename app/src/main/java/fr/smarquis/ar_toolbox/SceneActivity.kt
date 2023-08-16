@@ -3,6 +3,7 @@ package fr.smarquis.ar_toolbox
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
@@ -66,7 +67,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
     private var drawing: Drawing? = null
     fun filename(): String = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
 
-    fun recordingTraceFile(extension: String): File = File(filename() + extension)
+    fun recordingTraceFile(extension: String): File = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename() + extension)
 
     private val setOfMaterialViews by lazy {
         with(bottomSheetNode.body) {
@@ -561,23 +562,29 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
 
     private fun serializeNode(node: Nodes) {
         try {
-            val outputCSVFile = FileWriter(File(filename() + ".csv"), true)
+            val outputFile = recordingTraceFile(".csv");
+            if (outputFile.exists()) {
+                Log.e("SceneActivity", "Output file created at " + outputFile.absolutePath)
+                val outputCSVFile = FileWriter(outputFile, true)
 
-            val nodeData = node.worldPosition.format(this@SceneActivity)
-                .plus(";")
-                .plus(node.worldRotation.format(this@SceneActivity))
-                .plus(";")
-                .plus(node.worldScale.format(this@SceneActivity))
-                .plus(";")
-                .plus((node as? CloudAnchor)?.state()?.name)
-                .plus(";")
-                .plus((node as? CloudAnchor)?.let { it.id() ?: "…" })
-                .plus(";")
-                .plus((node as? Measure)?.formatMeasure())
-            outputCSVFile.write(nodeData)
-            outputCSVFile.write("\r\n")
-            outputCSVFile.flush()
-            outputCSVFile.close()
+                val nodeData = node.worldPosition.format(this@SceneActivity)
+                    .plus(";")
+                    .plus(node.worldRotation.format(this@SceneActivity))
+                    .plus(";")
+                    .plus(node.worldScale.format(this@SceneActivity))
+                    .plus(";")
+                    .plus((node as? CloudAnchor)?.state()?.name)
+                    .plus(";")
+                    .plus((node as? CloudAnchor)?.let { it.id() ?: "…" })
+                    .plus(";")
+                    .plus((node as? Measure)?.formatMeasure())
+                outputCSVFile.write(nodeData)
+                outputCSVFile.write("\r\n")
+                outputCSVFile.flush()
+                outputCSVFile.close()
+            } else {
+                Log.e("SceneActivity", "Output file not created")
+            }
         } catch (e: Exception) {
             Log.e("SceneActivity", "Exception writing to file", e)
             return
