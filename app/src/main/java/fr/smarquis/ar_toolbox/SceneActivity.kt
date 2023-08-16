@@ -596,7 +596,7 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
             Log.i("SceneActivity", "add permission for files")
             if (!Environment.isExternalStorageManager()) {
                 val getpermission = Intent()
-                getpermission.setAction(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                getpermission.setAction(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                 startActivity(getpermission)
             }
         } else {
