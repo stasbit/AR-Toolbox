@@ -591,13 +591,16 @@ class SceneActivity : ArActivity<ActivitySceneBinding>(ActivitySceneBinding::inf
         }
     }
 
-    public fun askForPermissions() {
+    fun askForPermissions() {
         if (Build.VERSION.SDK_INT >= 30) {
+            Log.i("SceneActivity", "add permission for files")
             if (!Environment.isExternalStorageManager()) {
                 val getpermission = Intent()
                 getpermission.setAction(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                 startActivity(getpermission)
             }
+        } else {
+            Log.i("SceneActivity", "version does not support add permission for files. Version is " + Build.VERSION.SDK_INT)
         }
     }
 }
